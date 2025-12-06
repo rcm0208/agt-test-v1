@@ -7,8 +7,6 @@ import {
   TextInput,
   useTheme,
 } from "react-native-paper";
-import Animated, { SlideInDown, SlideOutDown } from "react-native-reanimated";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { setAudioModeAsync, useAudioPlayer } from "expo-audio";
 import {
   Stack,
@@ -32,7 +30,6 @@ export default function WorkoutSessionScreen() {
   const router = useRouter();
   const navigation = useNavigation();
   const theme = useTheme();
-  const insets = useSafeAreaInsets();
 
   const [hasUnsavedChanges, setHasUnsavedChanges] = React.useState(true);
 
@@ -421,18 +418,7 @@ export default function WorkoutSessionScreen() {
       </ScrollView>
 
       {timerVisible && (
-        <Animated.View
-          entering={SlideInDown.damping(15)}
-          exiting={SlideOutDown}
-          style={[
-            styles.timerContainer,
-            {
-              backgroundColor: theme.colors.primary,
-              bottom: 80 + insets.bottom,
-              borderColor: theme.colors.outline,
-            },
-          ]}
-        >
+        <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
           <Timer
             initialDuration={60}
             onFinish={() => {
@@ -441,7 +427,7 @@ export default function WorkoutSessionScreen() {
               player.play();
             }}
           />
-        </Animated.View>
+        </View>
       )}
 
       <View
@@ -539,15 +525,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     opacity: 0.5,
-  },
-  timerContainer: {
-    position: "absolute",
-    left: 16,
-    right: 16,
-    padding: 20,
-    borderRadius: 0,
-    borderWidth: 2,
-    elevation: 0,
   },
   footer: {
     padding: 16,
