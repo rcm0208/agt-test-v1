@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, StyleSheet, TouchableOpacity, View } from "react-native";
 import DraggableFlatList, {
   RenderItemParams,
@@ -7,13 +7,18 @@ import DraggableFlatList, {
 import {
   Button,
   IconButton,
-  List,
   Text,
   TextInput,
   useTheme,
 } from "react-native-paper";
-import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import {
+  Stack,
+  useFocusEffect,
+  useLocalSearchParams,
+  useRouter,
+} from "expo-router";
 
+import { usePlanSelection } from "../../context/PlanSelectionContext";
 import { useWorkout } from "../../context/WorkoutContext";
 import { Plan, PlanExercise } from "../../types";
 
@@ -22,6 +27,7 @@ export default function PlanEditorScreen() {
   const theme = useTheme();
   const { id } = useLocalSearchParams();
   const { plans, addPlan, updatePlan, exercises } = useWorkout();
+  const { pendingExerciseId, setPendingExerciseId } = usePlanSelection();
 
   const isEditing = !!id;
   const existingPlan = isEditing ? plans.find((p) => p.id === id) : undefined;
@@ -72,11 +78,23 @@ export default function PlanEditorScreen() {
     router.back();
   };
 
-  const [selectionVisible, setSelectionVisible] = useState(false);
+  useFocusEffect(
+    useCallback(() => {
+      if (!pendingExerciseId) return;
+      setPlanExercises((current) => {
+        const updatedExercises = [
+          ...current,
+          { exerciseId: pendingExerciseId, targetSets: 3 },
+        ];
+        planExercisesRef.current = updatedExercises;
+        return updatedExercises;
+      });
+      setPendingExerciseId(undefined);
+    }, [pendingExerciseId, setPendingExerciseId]),
+  );
 
-  const addExerciseToPlan = (exerciseId: string) => {
-    setPlanExercises([...planExercises, { exerciseId, targetSets: 3 }]);
-    setSelectionVisible(false);
+  const openExerciseSelection = () => {
+    router.push("/plan/select-exercise");
   };
 
   const updateSets = (index: number, sets: string) => {
@@ -176,7 +194,7 @@ export default function PlanEditorScreen() {
         ListFooterComponent={
           <Button
             mode="outlined"
-            onPress={() => setSelectionVisible(true)}
+            onPress={openExerciseSelection}
             style={styles.addButton}
           >
             Add Exercise
@@ -194,46 +212,6 @@ export default function PlanEditorScreen() {
           Save Plan
         </Button>
       </View>
-
-      {/* Simple Selection Modal */}
-      {selectionVisible && (
-        <View
-          style={[
-            styles.modalOverlay,
-            { backgroundColor: theme.colors.backdrop },
-          ]}
-        >
-          <View
-            style={[
-              styles.modalContent,
-              { backgroundColor: theme.colors.surface },
-            ]}
-          >
-            <Text variant="titleLarge" style={styles.modalTitle}>
-              Select Exercise
-            </Text>
-            {/* Reverting modal content to simple ScrollView/Map to avoid issues */}
-            <View style={{ maxHeight: 300 }}>
-              <List.Section>
-                {exercises.map((e) => (
-                  <List.Item
-                    key={e.id}
-                    title={e.name}
-                    onPress={() => addExerciseToPlan(e.id)}
-                    right={(props) => <List.Icon {...props} icon="plus" />}
-                  />
-                ))}
-              </List.Section>
-            </View>
-            <Button
-              onPress={() => setSelectionVisible(false)}
-              style={styles.closeButton}
-            >
-              Cancel
-            </Button>
-          </View>
-        </View>
-      )}
     </View>
   );
 }
@@ -284,23 +262,5 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     width: "100%",
-  },
-  modalOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: "center",
-    padding: 20,
-    zIndex: 100,
-  },
-  modalContent: {
-    borderRadius: 8,
-    padding: 16,
-    maxHeight: "80%",
-  },
-  modalTitle: {
-    marginBottom: 16,
-    textAlign: "center",
-  },
-  closeButton: {
-    marginTop: 16,
   },
 });

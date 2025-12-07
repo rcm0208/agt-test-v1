@@ -15,6 +15,7 @@ import {
 } from "@react-navigation/native";
 
 import { WorkoutProvider } from "../context/WorkoutContext";
+import { PlanSelectionProvider } from "../context/PlanSelectionContext";
 
 const { LightTheme, DarkTheme } = adaptNavigationTheme({
   reactNavigationLight: NavigationDefaultTheme,
@@ -109,24 +110,30 @@ export default function RootLayout() {
         <PaperProvider theme={theme as any}>
           <ThemeProvider value={theme as any}>
             <WorkoutProvider>
-              <Stack>
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen
-                  name="exercise/[id]"
-                  options={{ title: "Record Workout" }}
-                />
-                <Stack.Screen
-                  name="plan/editor"
-                  options={{ title: "Plan Editor", headerBackTitle: "Plans" }}
-                />
-                <Stack.Screen
-                  name="workout/[id]"
-                  options={{
-                    title: "Workout Session",
-                    headerBackTitle: "Exercises",
-                  }}
-                />
-              </Stack>
+              <PlanSelectionProvider>
+                <Stack>
+                  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                  <Stack.Screen
+                    name="exercise/[id]"
+                    options={{ title: "Record Workout" }}
+                  />
+                  <Stack.Screen
+                    name="plan/editor"
+                    options={{ title: "Plan Editor", headerBackTitle: "Plans" }}
+                  />
+                  <Stack.Screen
+                    name="plan/select-exercise"
+                    options={{ title: "Select Exercise" }}
+                  />
+                  <Stack.Screen
+                    name="workout/[id]"
+                    options={{
+                      title: "Workout Session",
+                      headerBackTitle: "Exercises",
+                    }}
+                  />
+                </Stack>
+              </PlanSelectionProvider>
             </WorkoutProvider>
           </ThemeProvider>
         </PaperProvider>

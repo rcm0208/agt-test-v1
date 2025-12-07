@@ -115,6 +115,70 @@ export default function WorkoutSessionScreen() {
 
   if (!plan) return null;
 
+  if (plan.exercises.length === 0) {
+    return (
+      <View
+        style={[
+          styles.container,
+          {
+            backgroundColor: theme.colors.background,
+            justifyContent: "center",
+            alignItems: "center",
+            padding: 24,
+          },
+        ]}
+      >
+        <Stack.Screen
+          options={{
+            title: "",
+            headerStyle: { backgroundColor: theme.colors.background },
+            headerShadowVisible: false,
+            gestureEnabled: false,
+            headerBackButtonMenuEnabled: false,
+            headerLeft: () => (
+              <IconButton
+                icon="arrow-left"
+                size={24}
+                iconColor={theme.colors.onSurface}
+                onPress={() => {
+                   setHasUnsavedChanges(false);
+                   router.back();
+                }}
+                style={{
+                  margin: 0,
+                  width: 40,
+                  height: 40,
+                  borderRadius: 20,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: theme.colors.elevation.level2,
+                }}
+              />
+            ),
+          }}
+        />
+        <Text
+          variant="headlineMedium"
+          style={{ color: theme.colors.onSurface, marginBottom: 8, textAlign: "center" }}
+        >
+          No Exercises Found
+        </Text>
+        <Text
+          variant="bodyLarge"
+          style={{ color: theme.colors.onSurfaceVariant, marginBottom: 24, textAlign: "center" }}
+        >
+          This plan doesn't have any exercises yet.
+        </Text>
+        <SolidButton onPress={() => {
+            setHasUnsavedChanges(false);
+            router.back();
+        }}>
+          Go Back
+        </SolidButton>
+      </View>
+    );
+  }
+
   const currentExercise = plan.exercises[currentExerciseIndex];
   const currentExerciseName =
     exercises.find((e) => e.id === currentExercise.exerciseId)?.name ||
