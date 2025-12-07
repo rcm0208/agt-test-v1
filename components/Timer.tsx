@@ -1,45 +1,96 @@
-import { LinearGradient } from "expo-linear-gradient";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Animated,
-  PanResponder,
-  StyleSheet,
-  View,
-  useWindowDimensions,
+    Animated,
+    PanResponder,
+    StyleSheet,
+    View,
+    useWindowDimensions,
 } from "react-native";
-import { Button, ProgressBar, Text, useTheme } from "react-native-paper";
+import {
+    Button,
+    IconButton,
+    ProgressBar,
+    Text,
+    useTheme,
+} from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface TimerProps {
   initialDuration?: number; // in seconds
   onFinish?: () => void;
+  boundaries?: {
+    width: number;
+    height: number;
+    top?: number;
+    bottom?: number;
+  };
 }
 
 export const Timer = React.forwardRef<
   { start: (duration: number) => void },
   TimerProps
->(({ onFinish, initialDuration }, ref) => {
+>(({ onFinish, initialDuration, boundaries }, ref) => {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const { width, height } = useWindowDimensions();
+  const window = useWindowDimensions();
+
+  // effective constraints
+  const boundaryWidth = boundaries?.width ?? window.width;
+  const boundaryHeight = boundaries?.height ?? window.height;
+  const boundaryTop = boundaries?.top ?? insets.top;
+  const boundaryBottom = boundaries?.bottom ?? insets.bottom;
+
+  // Calculate explicit width for the card to ensure layout consistency
+  const desiredWidth = Math.min(380, boundaryWidth * 0.9);
+
   const [timeLeft, setTimeLeft] = useState(0);
   const [isActive, setIsActive] = useState(false);
   const [totalDuration, setTotalDuration] = useState(0);
-  const [cardSize, setCardSize] = useState({ width: 0, height: 0 });
+  const [cardSize, setCardSize] = useState({ width: desiredWidth, height: 0 });
   const [initialized, setInitialized] = useState(false);
   const position = useRef(new Animated.ValueXY()).current;
+  const dragStart = useRef({ x: 0, y: 0 });
 
   const clampPosition = useCallback(
     (x: number, y: number) => {
-      const maxX = Math.max(12, width - cardSize.width - 12);
-      const maxY = Math.max(insets.top + 12, height - cardSize.height - 12);
+      // Use constrained width if available, fallback to desiredWidth
+      const effectiveWidth = cardSize.width || desiredWidth;
+      const effectiveHeight = cardSize.height || 140;
+      const halfW = effectiveWidth / 2;
+      const halfH = effectiveHeight / 2;
+
+      // Increased margin to account for shadows and ensure it stays onscreen
+      const margin = 24;
+
+      const minX = margin + halfW;
+      const maxX = boundaryWidth - margin - halfW;
+
+      const minY = boundaryTop + margin + halfH;
+      const maxY = boundaryHeight - boundaryBottom - margin - halfH;
+
+      const clampedCenterX = Math.min(
+        Math.max(x + halfW, minX),
+        Math.max(minX, maxX)
+      );
+      const clampedCenterY = Math.min(
+        Math.max(y + halfH, minY),
+        Math.max(minY, maxY)
+      );
 
       return {
-        x: Math.min(Math.max(x, 12), maxX),
-        y: Math.min(Math.max(y, insets.top + 12), maxY),
+        x: clampedCenterX - halfW,
+        y: clampedCenterY - halfH,
       };
     },
-    [cardSize.height, cardSize.width, height, insets.top, width]
+    [
+      cardSize.height,
+      cardSize.width,
+      desiredWidth,
+      boundaryHeight,
+      boundaryWidth,
+      boundaryTop,
+      boundaryBottom,
+    ]
   );
 
   const getPositionValue = useCallback(
@@ -64,23 +115,31 @@ export const Timer = React.forwardRef<
   }, [initialDuration]);
 
   useEffect(() => {
-    if (!cardSize.width || initialized) return;
-    const centeredX = (width - cardSize.width) / 2;
-    const startY = insets.top + 12;
+    if (initialized) return;
+    // Initial center position
+    const centeredX = (boundaryWidth - desiredWidth) / 2;
+    const startY = boundaryTop + 24; // Increased top margin for initial placement
     const { x, y } = clampPosition(centeredX, startY);
     position.setValue({ x, y });
     setInitialized(true);
-  }, [cardSize, width, insets.top, position, initialized, clampPosition]);
+  }, [
+    desiredWidth,
+    boundaryWidth,
+    boundaryTop,
+    position,
+    initialized,
+    clampPosition,
+  ]);
 
+  // Re-clamp when boundaries change
   useEffect(() => {
-    if (!cardSize.width || !initialized) return;
+    if (!initialized) return;
     const current = getPositionValue();
     const { x, y } = clampPosition(current.x ?? 0, current.y ?? 0);
     position.setValue({ x, y });
   }, [
-    width,
-    height,
-    cardSize,
+    boundaryWidth,
+    boundaryHeight,
     initialized,
     position,
     clampPosition,
@@ -107,19 +166,25 @@ export const Timer = React.forwardRef<
       onMoveShouldSetPanResponder: () => true,
       onPanResponderGrant: () => {
         const current = getPositionValue();
-        position.setOffset(current);
-        position.setValue({ x: 0, y: 0 });
+        position.stopAnimation();
+        const clamped = clampPosition(current.x, current.y);
+        dragStart.current = clamped;
+        position.setValue(clamped);
       },
-      onPanResponderMove: Animated.event(
-        [null, { dx: position.x, dy: position.y }],
-        { useNativeDriver: false }
-      ),
-      onPanResponderRelease: () => {
-        position.flattenOffset();
-        const current = getPositionValue();
-        const { x, y } = clampPosition(current.x, current.y);
+      onPanResponderMove: (_evt, gestureState) => {
+        const next = clampPosition(
+          dragStart.current.x + gestureState.dx,
+          dragStart.current.y + gestureState.dy
+        );
+        position.setValue(next);
+      },
+      onPanResponderRelease: (_evt, gestureState) => {
+        const target = clampPosition(
+          dragStart.current.x + gestureState.dx,
+          dragStart.current.y + gestureState.dy
+        );
         Animated.spring(position, {
-          toValue: { x, y },
+          toValue: target,
           useNativeDriver: false,
           bounciness: 6,
         }).start();
@@ -142,83 +207,81 @@ export const Timer = React.forwardRef<
       style={[
         styles.container,
         {
+          width: desiredWidth,
           transform: position.getTranslateTransform(),
+          backgroundColor: theme.dark
+            ? theme.colors.elevation.level3
+            : theme.colors.surface,
           shadowColor: "#000",
-          shadowOpacity: 0.18,
-          shadowRadius: 12,
+          shadowOpacity: theme.dark ? 0.5 : 0.15,
+          shadowRadius: 16,
           shadowOffset: { width: 0, height: 8 },
-          elevation: 8,
+          elevation: 12, // Higher elevation for "Rich" feel
+          borderColor: theme.dark
+            ? "rgba(255,255,255,0.1)"
+            : "rgba(0,0,0,0.05)", // Subtle border for Light mode sharpness
+          borderWidth: 1,
         },
       ]}
       {...panResponder.panHandlers}
     >
-      <LinearGradient
-        colors={[
-          theme.colors.surfaceVariant || "#2c2c2c",
-          theme.colors.primaryContainer || theme.colors.primary,
-        ]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradient}
-      >
-        <Text
-          variant="headlineSmall"
-          numberOfLines={1}
-          adjustsFontSizeToFit
-          style={[
-            styles.timerText,
-            {
-              color: theme.colors.onSurface,
-            },
-          ]}
-        >
-          {formatTime(timeLeft)}
-        </Text>
-        <ProgressBar
-          progress={progress}
-          color={theme.colors.onSurface}
-          style={styles.progressBar}
-        />
-        <View style={styles.controls}>
-          <Button
-            mode="outlined"
-            onPress={() => setTimeLeft((prev) => Math.max(0, prev - 10))}
-            style={styles.button}
-            contentStyle={{ height: 38, paddingHorizontal: 8 }}
-            labelStyle={styles.buttonLabel}
-            textColor={theme.colors.onSurface}
-            rippleColor="rgba(0,0,0,0.12)"
+      <View style={styles.content}>
+        <View style={styles.timeContainer}>
+          <Text
+            variant="displayMedium"
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            style={[
+              styles.timerText,
+              {
+                color: theme.colors.onSurface,
+              },
+            ]}
           >
-            -10
-          </Button>
+            {formatTime(timeLeft)}
+          </Text>
+          <ProgressBar
+            progress={progress}
+            color={theme.colors.primary}
+            style={[
+              styles.progressBar,
+              { backgroundColor: theme.colors.surfaceVariant },
+            ]}
+          />
+        </View>
+
+        <View style={styles.controls}>
+          <IconButton
+            icon="minus"
+            size={24}
+            mode={theme.dark ? "outlined" : "contained-tonal"}
+            onPress={() => setTimeLeft((prev) => Math.max(0, prev - 10))}
+            iconColor={theme.colors.onSurface}
+            style={styles.iconButton}
+          />
           <Button
-            mode="contained-tonal"
+            mode="text"
             onPress={() => {
               setIsActive(false);
               setTimeLeft(0);
               if (onFinish) onFinish();
             }}
-            style={styles.button}
-            contentStyle={{ height: 38, paddingHorizontal: 8 }}
-            labelStyle={styles.buttonLabel}
-            buttonColor="rgba(0,0,0,0.08)"
-            textColor={theme.colors.onSurface}
+            contentStyle={{ height: 48 }}
+            labelStyle={styles.skipLabel}
+            textColor={theme.colors.onSurfaceVariant}
           >
             Skip
           </Button>
-          <Button
-            mode="outlined"
+          <IconButton
+            icon="plus"
+            size={24}
+            mode={theme.dark ? "outlined" : "contained-tonal"}
             onPress={() => setTimeLeft((prev) => prev + 10)}
-            style={styles.button}
-            contentStyle={{ height: 38, paddingHorizontal: 8 }}
-            labelStyle={styles.buttonLabel}
-            textColor={theme.colors.onSurface}
-            rippleColor="rgba(0,0,0,0.12)"
-          >
-            +10
-          </Button>
+            iconColor={theme.colors.onSurface}
+            style={styles.iconButton}
+          />
         </View>
-      </LinearGradient>
+      </View>
     </Animated.View>
   );
 });
@@ -235,45 +298,43 @@ const styles = StyleSheet.create({
     position: "absolute",
     zIndex: 20,
     alignItems: "center",
-    borderRadius: 24,
+    borderRadius: 28, // More rounded for modern look
   },
-  gradient: {
-    width: "90%",
-    maxWidth: 380,
-    paddingHorizontal: 18,
-    paddingVertical: 16,
-    borderRadius: 24,
+  content: {
+    width: "100%",
+    paddingHorizontal: 24,
+    paddingVertical: 20,
     alignItems: "center",
   },
+  timeContainer: {
+    width: "100%",
+    alignItems: "center",
+    marginBottom: 20,
+  },
   timerText: {
-    marginBottom: 12,
-    fontWeight: "bold",
+    marginBottom: 16,
+    fontWeight: "800", // Thicker for "Rich" feel
     fontVariant: ["tabular-nums"],
-    fontSize: 24,
+    letterSpacing: -1,
   },
   progressBar: {
     width: "100%",
-    height: 6,
+    height: 4,
     borderRadius: 999,
-    marginBottom: 10,
-    backgroundColor: "#E0E0E0",
   },
   controls: {
     flexDirection: "row",
     justifyContent: "space-between",
     width: "100%",
-    gap: 8,
-    flexWrap: "nowrap",
     alignItems: "center",
+    paddingHorizontal: 8,
   },
-  button: {
-    flex: 1,
-    minWidth: 0,
-    borderRadius: 14,
+  iconButton: {
+    margin: 0,
   },
-  buttonLabel: {
-    fontSize: 13,
-    lineHeight: 16,
-    fontWeight: "700",
+  skipLabel: {
+    fontSize: 15,
+    fontWeight: "600",
+    letterSpacing: 0.5,
   },
 });

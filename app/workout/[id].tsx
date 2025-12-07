@@ -1,20 +1,21 @@
+import { usePreventRemove } from "@react-navigation/native";
+import { setAudioModeAsync, useAudioPlayer } from "expo-audio";
+import {
+    Stack,
+    useLocalSearchParams,
+    useNavigation,
+    useRouter,
+} from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Alert, ScrollView, StyleSheet, View } from "react-native";
 import {
-  IconButton,
-  ProgressBar,
-  Text,
-  TextInput,
-  useTheme,
+    IconButton,
+    ProgressBar,
+    Text,
+    TextInput,
+    useTheme,
 } from "react-native-paper";
-import { setAudioModeAsync, useAudioPlayer } from "expo-audio";
-import {
-  Stack,
-  useLocalSearchParams,
-  useNavigation,
-  useRouter,
-} from "expo-router";
-import { usePreventRemove } from "@react-navigation/native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Timer } from "../../components/Timer";
 import { SolidButton } from "../../components/ui/SolidButton";
@@ -54,6 +55,12 @@ export default function WorkoutSessionScreen() {
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [sessionData, setSessionData] = useState<SetData[][]>([]);
   const [timerVisible, setTimerVisible] = useState(false);
+
+  const [containerLayout, setContainerLayout] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
+  const [footerHeight, setFooterHeight] = useState(0);
 
   // Setup Audio Player
   const player = useAudioPlayer(
@@ -190,9 +197,17 @@ export default function WorkoutSessionScreen() {
 
   const progress = (currentExerciseIndex + 1) / plan.exercises.length;
 
+  const insets = useSafeAreaInsets();
+
   return (
     <View
       style={[styles.container, { backgroundColor: theme.colors.background }]}
+      onLayout={(e) =>
+        setContainerLayout({
+          width: e.nativeEvent.layout.width,
+          height: e.nativeEvent.layout.height,
+        })
+      }
     >
       <Stack.Screen
         options={{
@@ -426,6 +441,16 @@ export default function WorkoutSessionScreen() {
               player.seekTo(0);
               player.play();
             }}
+            boundaries={
+              containerLayout
+                ? {
+                    width: containerLayout.width,
+                    height: containerLayout.height,
+                    top: 0,
+                    bottom: footerHeight, // Stop above the footer
+                  }
+                : undefined
+            }
           />
         </View>
       )}
@@ -436,8 +461,11 @@ export default function WorkoutSessionScreen() {
           {
             backgroundColor: theme.colors.surface,
             borderTopColor: theme.colors.outline,
+            paddingBottom: Math.max(insets.bottom, 16),
+            height: undefined, // ensure height is auto
           },
         ]}
+        onLayout={(e) => setFooterHeight(e.nativeEvent.layout.height)}
       >
         {currentExerciseIndex > 0 && (
           <SolidButton
