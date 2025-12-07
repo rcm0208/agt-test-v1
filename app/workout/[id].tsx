@@ -1,19 +1,19 @@
 import { usePreventRemove } from "@react-navigation/native";
 import { setAudioModeAsync, useAudioPlayer } from "expo-audio";
 import {
-    Stack,
-    useLocalSearchParams,
-    useNavigation,
-    useRouter,
+  Stack,
+  useLocalSearchParams,
+  useNavigation,
+  useRouter,
 } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Alert, ScrollView, StyleSheet, View } from "react-native";
 import {
-    IconButton,
-    ProgressBar,
-    Text,
-    TextInput,
-    useTheme,
+  IconButton,
+  ProgressBar,
+  Text,
+  TextInput,
+  useTheme
 } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -48,6 +48,29 @@ export default function WorkoutSessionScreen() {
       ],
     );
   });
+
+  const handleBack = () => {
+    if (hasUnsavedChanges) {
+      Alert.alert(
+        "Discard workout?",
+        "Are you sure you want to leave? Your progress will be lost.",
+        [
+          { text: "Don't leave", style: "cancel" },
+          {
+            text: "Discard",
+            style: "destructive",
+            onPress: () => {
+              setHasUnsavedChanges(false);
+              // Small delay to ensure state update propagates before navigation
+              setTimeout(() => router.back(), 0);
+            },
+          },
+        ],
+      );
+    } else {
+      router.back();
+    }
+  };
   const { id } = useLocalSearchParams();
   const { plans, exercises, saveWorkoutSession } = useWorkout();
 
@@ -216,6 +239,21 @@ export default function WorkoutSessionScreen() {
           headerShadowVisible: false,
           gestureEnabled: false,
           headerBackButtonMenuEnabled: false,
+          headerLeft: () => (
+            <IconButton
+              icon="arrow-left"
+              size={24}
+              iconColor={theme.colors.onSurface}
+              onPress={handleBack}
+              style={{
+                margin: 0,
+                width: 40,
+                height: 40,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            />
+          ),
         }}
       />
 
