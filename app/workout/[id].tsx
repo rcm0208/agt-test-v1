@@ -559,38 +559,41 @@ const styles = StyleSheet.create({
   setRowContent: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 8, // Reduced padding
+    paddingHorizontal: 16, // Increased from 8
+    paddingVertical: 12, // Increased from 8
     justifyContent: "space-between",
   },
   setInfo: {
     flexDirection: "row",
     alignItems: "center",
-    marginRight: 8, // Increased spacing between SET label and inputs
+    width: 80, // Fixed width to align SET labels consistently
+    marginRight: 8,
     flexShrink: 0,
   },
   setLabel: {
     fontWeight: "900",
-    fontSize: 16, // Slightly smaller
+    fontSize: 16,
   },
   inputs: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 1, // Minimal gap to reduce spacing between KG and X
+    gap: 8, // Increased gap for better separation
   },
   input: {
     backgroundColor: "transparent",
-    fontSize: 20,
+    fontSize: 22, // Slightly larger
     fontWeight: "900",
-    textAlign: "left",
+    textAlign: "center", // Center text in input
     padding: 0,
     height: 40,
   },
   x: {
     fontSize: 20,
     fontWeight: "bold",
-    opacity: 0.5,
+    opacity: 0.3, // Subtle X
+    marginHorizontal: 4,
   },
   footer: {
     padding: 16,
