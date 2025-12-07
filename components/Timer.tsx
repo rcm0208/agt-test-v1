@@ -1,17 +1,17 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-    Animated,
-    PanResponder,
-    StyleSheet,
-    View,
-    useWindowDimensions,
+  Animated,
+  PanResponder,
+  StyleSheet,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import {
-    Button,
-    IconButton,
-    ProgressBar,
-    Text,
-    useTheme,
+  Button,
+  IconButton,
+  ProgressBar,
+  Text,
+  useTheme,
 } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -70,11 +70,11 @@ export const Timer = React.forwardRef<
 
       const clampedCenterX = Math.min(
         Math.max(x + halfW, minX),
-        Math.max(minX, maxX)
+        Math.max(minX, maxX),
       );
       const clampedCenterY = Math.min(
         Math.max(y + halfH, minY),
-        Math.max(minY, maxY)
+        Math.max(minY, maxY),
       );
 
       return {
@@ -90,12 +90,12 @@ export const Timer = React.forwardRef<
       boundaryWidth,
       boundaryTop,
       boundaryBottom,
-    ]
+    ],
   );
 
   const getPositionValue = useCallback(
     () => (position as any).__getValue() as { x: number; y: number },
-    [position]
+    [position],
   );
 
   React.useImperativeHandle(ref, () => ({
@@ -174,14 +174,14 @@ export const Timer = React.forwardRef<
       onPanResponderMove: (_evt, gestureState) => {
         const next = clampPosition(
           dragStart.current.x + gestureState.dx,
-          dragStart.current.y + gestureState.dy
+          dragStart.current.y + gestureState.dy,
         );
         position.setValue(next);
       },
       onPanResponderRelease: (_evt, gestureState) => {
         const target = clampPosition(
           dragStart.current.x + gestureState.dx,
-          dragStart.current.y + gestureState.dy
+          dragStart.current.y + gestureState.dy,
         );
         Animated.spring(position, {
           toValue: target,
@@ -189,7 +189,7 @@ export const Timer = React.forwardRef<
           bounciness: 6,
         }).start();
       },
-    })
+    }),
   ).current;
 
   if (!isActive && timeLeft === 0) return null;

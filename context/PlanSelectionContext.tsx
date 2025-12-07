@@ -5,17 +5,21 @@ interface PlanSelectionContextValue {
   setPendingExerciseId: (exerciseId?: string) => void;
 }
 
-const PlanSelectionContext = createContext<PlanSelectionContextValue | undefined>(
-  undefined,
-);
+const PlanSelectionContext = createContext<
+  PlanSelectionContextValue | undefined
+>(undefined);
 
 export const PlanSelectionProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [pendingExerciseId, setPendingExerciseId] = useState<string | undefined>();
+  const [pendingExerciseId, setPendingExerciseId] = useState<
+    string | undefined
+  >();
 
   return (
-    <PlanSelectionContext.Provider value={{ pendingExerciseId, setPendingExerciseId }}>
+    <PlanSelectionContext.Provider
+      value={{ pendingExerciseId, setPendingExerciseId }}
+    >
       {children}
     </PlanSelectionContext.Provider>
   );
@@ -24,7 +28,9 @@ export const PlanSelectionProvider: React.FC<{ children: React.ReactNode }> = ({
 export const usePlanSelection = () => {
   const context = useContext(PlanSelectionContext);
   if (context === undefined) {
-    throw new Error("usePlanSelection must be used within a PlanSelectionProvider");
+    throw new Error(
+      "usePlanSelection must be used within a PlanSelectionProvider",
+    );
   }
   return context;
 };

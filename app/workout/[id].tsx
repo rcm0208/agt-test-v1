@@ -1,11 +1,3 @@
-import { usePreventRemove } from "@react-navigation/native";
-import { setAudioModeAsync, useAudioPlayer } from "expo-audio";
-import {
-  Stack,
-  useLocalSearchParams,
-  useNavigation,
-  useRouter,
-} from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Alert, ScrollView, StyleSheet, View } from "react-native";
 import {
@@ -13,9 +5,17 @@ import {
   ProgressBar,
   Text,
   TextInput,
-  useTheme
+  useTheme,
 } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { setAudioModeAsync, useAudioPlayer } from "expo-audio";
+import {
+  Stack,
+  useLocalSearchParams,
+  useNavigation,
+  useRouter,
+} from "expo-router";
+import { usePreventRemove } from "@react-navigation/native";
 
 import { Timer } from "../../components/Timer";
 import { SolidButton } from "../../components/ui/SolidButton";
@@ -31,6 +31,7 @@ export default function WorkoutSessionScreen() {
   const router = useRouter();
   const navigation = useNavigation();
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
 
   const [hasUnsavedChanges, setHasUnsavedChanges] = React.useState(true);
 
@@ -141,8 +142,8 @@ export default function WorkoutSessionScreen() {
                 size={24}
                 iconColor={theme.colors.onSurface}
                 onPress={() => {
-                   setHasUnsavedChanges(false);
-                   router.back();
+                  setHasUnsavedChanges(false);
+                  router.back();
                 }}
                 style={{
                   margin: 0,
@@ -159,20 +160,30 @@ export default function WorkoutSessionScreen() {
         />
         <Text
           variant="headlineMedium"
-          style={{ color: theme.colors.onSurface, marginBottom: 8, textAlign: "center" }}
+          style={{
+            color: theme.colors.onSurface,
+            marginBottom: 8,
+            textAlign: "center",
+          }}
         >
           No Exercises Found
         </Text>
         <Text
           variant="bodyLarge"
-          style={{ color: theme.colors.onSurfaceVariant, marginBottom: 24, textAlign: "center" }}
+          style={{
+            color: theme.colors.onSurfaceVariant,
+            marginBottom: 24,
+            textAlign: "center",
+          }}
         >
-          This plan doesn't have any exercises yet.
+          This plan doesn&apos;t have any exercises yet.
         </Text>
-        <SolidButton onPress={() => {
+        <SolidButton
+          onPress={() => {
             setHasUnsavedChanges(false);
             router.back();
-        }}>
+          }}
+        >
           Go Back
         </SolidButton>
       </View>
@@ -283,8 +294,6 @@ export default function WorkoutSessionScreen() {
   };
 
   const progress = (currentExerciseIndex + 1) / plan.exercises.length;
-
-  const insets = useSafeAreaInsets();
 
   return (
     <View

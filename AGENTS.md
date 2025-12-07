@@ -53,7 +53,8 @@ Native/TypeScript プロジェクトを前提にしています。
 
 ## 作業後チェック
 
-- 実装後は `npm run lint` と `npm run format` を実行し、エラーが出た場合は `npm run lint:fix` と `npm run format:fix` を順に流す。
+- 実装後は `npm run lint` と `npm run format` を実行し、エラーが出た場合は
+  `npm run lint:fix` と `npm run format:fix` を順に流す。
 - 依存やスクリプトを追加した場合は本手順を更新する。
 
 ## セキュリティ・設定

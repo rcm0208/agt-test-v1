@@ -11,6 +11,7 @@ import {
   TextInput,
   useTheme,
 } from "react-native-paper";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   Stack,
   useFocusEffect,
@@ -25,6 +26,7 @@ import { Plan, PlanExercise } from "../../types";
 export default function PlanEditorScreen() {
   const router = useRouter();
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams();
   const { plans, addPlan, updatePlan, exercises } = useWorkout();
   const { pendingExerciseId, setPendingExerciseId } = usePlanSelection();
@@ -94,7 +96,7 @@ export default function PlanEditorScreen() {
   );
 
   const openExerciseSelection = () => {
-    router.push("/plan/select-exercise");
+    router.push("/plan/select-exercise" as any);
   };
 
   const updateSets = (index: number, sets: string) => {
@@ -177,6 +179,7 @@ export default function PlanEditorScreen() {
         keyExtractor={(item, index) => `${item.exerciseId}-${index}`}
         renderItem={renderItem}
         contentContainerStyle={styles.scrollContent}
+        containerStyle={{ flex: 1 }}
         ListHeaderComponent={
           <View>
             <TextInput
@@ -202,7 +205,15 @@ export default function PlanEditorScreen() {
         }
       />
 
-      <View style={styles.footer}>
+      <View
+        style={[
+          styles.footer,
+          {
+            backgroundColor: theme.colors.surface,
+            paddingBottom: Math.max(insets.bottom, 16),
+          },
+        ]}
+      >
         <Button
           mode="contained"
           onPress={handleSave}
@@ -259,6 +270,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#ccc",
     backgroundColor: "transparent", // Or theme surface
+    paddingBottom: 16, // Will be overridden
   },
   saveButton: {
     width: "100%",

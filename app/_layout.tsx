@@ -14,8 +14,8 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 
-import { WorkoutProvider } from "../context/WorkoutContext";
 import { PlanSelectionProvider } from "../context/PlanSelectionContext";
+import { WorkoutProvider } from "../context/WorkoutContext";
 
 const { LightTheme, DarkTheme } = adaptNavigationTheme({
   reactNavigationLight: NavigationDefaultTheme,
@@ -112,7 +112,10 @@ export default function RootLayout() {
             <WorkoutProvider>
               <PlanSelectionProvider>
                 <Stack>
-                  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                  <Stack.Screen
+                    name="(tabs)"
+                    options={{ headerShown: false }}
+                  />
                   <Stack.Screen
                     name="exercise/[id]"
                     options={{ title: "Record Workout" }}
